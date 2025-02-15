@@ -64,7 +64,7 @@ def spline_basis(z, knots):
     # 将基函数堆叠为矩阵
     return np.column_stack(basis)
 
-# GLM用函数：Huber损失函数+GroupLasso正则化
+# GLM用类：Huber损失函数+GroupLasso正则化
 class GroupLassoHuberRegressor:
     def __init__(self, epsilon=0.5, lambda_=0.1, max_iter=1000):
         self.epsilon = epsilon  # Huber 损失函数的阈值参数
@@ -180,7 +180,6 @@ class PositionalEncoding(nn.Module):
     def forward(self, x):
         # [T, N, F]
         return x + self.pe[: x.size(0), :]
-
 
 class Transformer(nn.Module):
     def __init__(self, input_dim=6, output_dim=1, d_model=8, nhead=4, num_layers=2, dropout=0.5, device=None):

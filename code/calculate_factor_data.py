@@ -3,16 +3,10 @@ import pandas as pd
 import multiprocessing as mp
 from functools import partial
 import os
-import copy
-import matplotlib.pyplot as plt
-import datetime
 from tqdm import tqdm
 from utils import *
 
 from joblib import Parallel, delayed
-import logging
-import random
-import calendar
 
 from trading_days import TradingDay
 
@@ -32,17 +26,17 @@ class FactorCalculator:
                            statement_type='408001000', index_col="opdate", field="NET_PROFIT_EXCL_MIN_INT_INC".lower(),
                            columns_col="S_INFO_WINDCODE", ann_date_col='ANN_DT', aggfunc=None):
         """
-        ±¨¸æÆÚÅûÂ¶µÄÊı¾İ´¦Àí£¬±ÜÃâÎ´À´ĞÅÏ¢
-        :param table: Ô­Ê¼Êı¾İ³¤±í
-        :param report_period: ±¨¸æÆÚ£¬'1231','0331','0630','0930'
-        :param report_period_col: ±¨¸æÆÚ¶ÔÓ¦ÁĞÃû
+        æŠ¥å‘ŠæœŸæŠ«éœ²çš„æ•°æ®å¤„ç†ï¼Œé¿å…æœªæ¥ä¿¡æ¯
+        :param table: åŸå§‹æ•°æ®é•¿è¡¨
+        :param report_period: æŠ¥å‘ŠæœŸï¼Œ'1231','0331','0630','0930'
+        :param report_period_col: æŠ¥å‘ŠæœŸå¯¹åº”åˆ—å
         :param statement_type:
-        :param index_col: ×ª¿í±íµÄindex¶ÔÓ¦ÁĞÃû£¬Ò»°ãÎªÊı¾İ¸üĞÂ»ñÈ¡Ê±¼ä
-        :param field: ĞèÒª×ª»¯µÄÊı¾İÁĞÃû
-        :param columns_col: ×ª¿í±íµÄcolumns¶ÔÓ¦ÁĞÃû£¬Ò»°ãÎª¹ÉÆ±´úÂëÁĞ
-        :param ann_date_col: ¹«¸æÈÕÁĞÃû
+        :param index_col: è½¬å®½è¡¨çš„indexå¯¹åº”åˆ—åï¼Œä¸€èˆ¬ä¸ºæ•°æ®æ›´æ–°è·å–æ—¶é—´
+        :param field: éœ€è¦è½¬åŒ–çš„æ•°æ®åˆ—å
+        :param columns_col: è½¬å®½è¡¨çš„columnså¯¹åº”åˆ—åï¼Œä¸€èˆ¬ä¸ºè‚¡ç¥¨ä»£ç åˆ—
+        :param ann_date_col: å…¬å‘Šæ—¥åˆ—å
         :param aggfunc:
-        :return: ÈÕÆµÊı¾İ¿í±í
+        :return: æ—¥é¢‘æ•°æ®å®½è¡¨
         """
         if 'STATEMENT_TYPE' in table.columns:
             table_tmp = table[table['STATEMENT_TYPE'] == statement_type]
@@ -79,9 +73,9 @@ class FactorCalculator:
                             ['0331', '0630', '0930', '1231']), ann_date_col].apply(
                         lambda x: self.td.trading_days[
                             self.td.get_loc(self.td.last_trading_day(self.td.next_trading_day(x))) + 21 * 7])
-        ##Ö»±£ÁôopdateÔÚlast_opdateÖ®Ç°µÄÊı¾İ
+        ##åªä¿ç•™opdateåœ¨last_opdateä¹‹å‰çš„æ•°æ®
         table_tmp = table_tmp[table_tmp[index_col] < table_tmp['last_opdate']]
-        ##°ÑÃ»ÓĞ¸ÄÊı£¬Ö»¸ÄÁËopdateµÄÊı¾İÈ¥ÖØ
+        ##æŠŠæ²¡æœ‰æ”¹æ•°ï¼Œåªæ”¹äº†opdateçš„æ•°æ®å»é‡
         table_tmp = table_tmp.drop_duplicates([columns_col, report_period_col, field, ann_date_col], keep='first')
         update_dates = list(table_tmp[report_period_col].unique())
         update_dates.sort(reverse=True)
@@ -102,13 +96,13 @@ class FactorCalculator:
                     self.symbol_idx, axis=1)
             else:
                 if update_date[-4:] == '0331':
-                    limit = 21 * 5  # (Ò»)¼¾¶È±¨¸æÓ¦µ±ÔÚÃ¿¸ö»á¼ÆÄê¶ÈµÚ3¸öÔÂ½áÊøºóµÄ1¸öÔÂÄÚ
+                    limit = 21 * 5  # (ä¸€)å­£åº¦æŠ¥å‘Šåº”å½“åœ¨æ¯ä¸ªä¼šè®¡å¹´åº¦ç¬¬3ä¸ªæœˆç»“æŸåçš„1ä¸ªæœˆå†…
                 elif update_date[-4:] == '0630':
-                    limit = 21 * 4  # ÖĞÆÚ±¨¸æÓ¦µ±ÔÚÃ¿¸ö»á¼ÆÄê¶ÈµÄÉÏ°ëÄê½áÊøÖ®ÈÕÆğ2¸öÔÂÄÚ
+                    limit = 21 * 4  # ä¸­æœŸæŠ¥å‘Šåº”å½“åœ¨æ¯ä¸ªä¼šè®¡å¹´åº¦çš„ä¸ŠåŠå¹´ç»“æŸä¹‹æ—¥èµ·2ä¸ªæœˆå†…
                 elif update_date[-4:] == '0930':
-                    limit = 21 * 7  # (Èı)¼¾¶È±¨¸æÓ¦µ±ÔÚÃ¿¸ö»á¼ÆÄê¶ÈµÚ9¸öÔÂ½áÊøºóµÄ1¸öÔÂÄÚ
+                    limit = 21 * 7  # (ä¸‰)å­£åº¦æŠ¥å‘Šåº”å½“åœ¨æ¯ä¸ªä¼šè®¡å¹´åº¦ç¬¬9ä¸ªæœˆç»“æŸåçš„1ä¸ªæœˆå†…
                 elif update_date[-4:] == '1231':
-                    limit = 21 * 4  # Äê¶È±¨¸æÓ¦µ±ÔÚÃ¿¸ö»á¼ÆÄê¶È½áÊøÖ®ÈÕÆğ4¸öÔÂÄÚ
+                    limit = 21 * 4  # å¹´åº¦æŠ¥å‘Šåº”å½“åœ¨æ¯ä¸ªä¼šè®¡å¹´åº¦ç»“æŸä¹‹æ—¥èµ·4ä¸ªæœˆå†…
                 else:
                     limit = 21 * 7
 
@@ -116,7 +110,7 @@ class FactorCalculator:
                     arr = table_tmp[table_tmp[report_period_col] == update_date].pivot(index=index_col,
                                                                                        columns=columns_col,
                                                                                        values=field)
-                else:  # opdate²»ÄÜÍíÓÚann dtµÄÒ»¶¨Ê±¼ä£¬Õâ¸öÊ±¼äºÍffillµÄlimit±£³ÖÒ»ÖÂ
+                else:  # opdateä¸èƒ½æ™šäºann dtçš„ä¸€å®šæ—¶é—´ï¼Œè¿™ä¸ªæ—¶é—´å’Œffillçš„limitä¿æŒä¸€è‡´
                     arr = table_tmp[table_tmp[report_period_col] == update_date].pivot_table(index=index_col,
                                                                                              columns=columns_col,
                                                                                              values=field,
@@ -136,7 +130,7 @@ class FactorCalculator:
             return pd.DataFrame()
         return pd.DataFrame(result, index=self.date_idx, columns=self.symbol_idx)
 
-    # »ù±¾ÃæÒò×Ó
+    # åŸºæœ¬é¢å› å­
 
     def calc_DebttoAsset(self):
         data_a = pd.read_pickle('asharebalancesheet.pkl').dropna(subset=['symbol', 'ann_dt', 'report_period'])
@@ -317,7 +311,7 @@ class FactorCalculator:
         log_mv = np.log(total_mv)
         log_mv.to_pickle(os.path.join(self.target_dir, 'LogCAP.pkl'))
 
-    # Á¿¼ÛÒò×Ó
+    # é‡ä»·å› å­
 
     def calc_EMA10(self):
         close = pd.read_pickle('close.pkl')
@@ -514,7 +508,7 @@ class FactorCalculator:
             self.negtive_volatility).reindex(index=self.date_idx, columns=self.symbol_idx)
         down_volatility.to_pickle(os.path.join(self.target_dir, 'DownVolatility.pkl'))
 
-    # ÁíÀàÒò×Ó
+    # å¦ç±»å› å­
 
     @staticmethod
     def author_weight(data_long, field, index_, columns_):
@@ -528,7 +522,7 @@ class FactorCalculator:
 
     @staticmethod
     def time_weight(valid_data):
-        # ¼ÆËãÊ±¼ä¼ÓÈ¨Æ½¾ù
+        # è®¡ç®—æ—¶é—´åŠ æƒå¹³å‡
         time_weight = np.broadcast_to(np.arange(63, 0, -1)[:, np.newaxis, np.newaxis], valid_data.shape)
         time_weight = np.where(np.isnan(valid_data), np.nan, time_weight)
         time_weight = time_weight / np.nansum(time_weight, axis=0)
@@ -542,7 +536,7 @@ class FactorCalculator:
 
         for i in range(63):
             pivot_enddate_shift = pivot_enddate.shift(i)
-            mask_shift = (pivot_enddate_shift >= pivot_enddate_shift.index[:, None])  # ÌáÈ¡ÓĞĞ§Êı¾İ£¨µ±Ç°ÈÕÆÚÔÚÄê±¨·¢²¼Ö®Ç°£©
+            mask_shift = (pivot_enddate_shift >= pivot_enddate_shift.index[:, None])  # æå–æœ‰æ•ˆæ•°æ®ï¼ˆå½“å‰æ—¥æœŸåœ¨å¹´æŠ¥å‘å¸ƒä¹‹å‰ï¼‰
             data_shift = data_pivot.shift(i)
             data_shift = data_shift[mask_shift]
             valid_data = np.array([data_shift]) if i == 0 else np.concatenate(
@@ -551,19 +545,19 @@ class FactorCalculator:
 
     def get_gogoal_factor(self, fy, field, mode):
         """
-        ÊÖ¶¯¹¹½¨·ÖÎöÊ¦Ô¤ÆÚÊı¾İ
-        :param fy: Ô¤²â¿ç¶È
-        :param field: ×Ö¶ÎÃû
-        :param mode: È¨ÖØ¹æÔò£¬0£ºµÈÈ¨£»1£ºÊ±¼ä¼ÓÈ¨£»3£º·ÖÎöÊ¦¼ÓÈ¨£»4£ºÊ±¼ä+·ÖÎöÊ¦¼ÓÈ¨
+        æ‰‹åŠ¨æ„å»ºåˆ†æå¸ˆé¢„æœŸæ•°æ®
+        :param fy: é¢„æµ‹è·¨åº¦
+        :param field: å­—æ®µå
+        :param mode: æƒé‡è§„åˆ™ï¼Œ0ï¼šç­‰æƒï¼›1ï¼šæ—¶é—´åŠ æƒï¼›3ï¼šåˆ†æå¸ˆåŠ æƒï¼›4ï¼šæ—¶é—´+åˆ†æå¸ˆåŠ æƒ
         :return:
         """
-        # ¶ÁÔ­Ê¼Êı¾İ
+        # è¯»åŸå§‹æ•°æ®
         crystal_aut = pd.read_pickle('der_crystalball_author.pkl')
         newfortune_aut = pd.read_pickle('der_new_fortune_author.pkl')
         rpt_forecast = pd.read_pickle('rpt_forecast_stk.pkl')
         rpt_report_author = pd.read_pickle('rpt_report_author.pkl')
-        actual_rpt_date = pd.read_pickle("¶¨ÆÚ±¨¸æÅûÂ¶ÈÕÆÚ.pkl")
-        # Êı¾İÔ¤´¦Àí
+        actual_rpt_date = pd.read_pickle("å®šæœŸæŠ¥å‘ŠæŠ«éœ²æ—¥æœŸ.pkl")
+        # æ•°æ®é¢„å¤„ç†
         rpt_forecast['create_date'] = pd.to_datetime(rpt_forecast['create_date'].astype(str))
         rpt_forecast['updatetime'] = pd.to_datetime(rpt_forecast['updatetime'].dt.strftime('%Y-%m-%d'))
         rpt_forecast['date'] = np.where(rpt_forecast['create_date'] >= '2017-04-12', rpt_forecast['updatetime'],
@@ -608,15 +602,15 @@ class FactorCalculator:
         crystal_aut = crystal_aut[crystal_aut['is_valid'] == 1]
         important_aut = pd.concat([newfortune_aut, crystal_aut])[
             ['report_year', 'author_id', 'author', 'prize_awarded']]
-        important_aut.loc[important_aut['prize_awarded'] == 'µÚÒ»Ãû', 'prize_awarded'] = 1
-        important_aut.loc[important_aut['prize_awarded'] == 'µÚ¶şÃû', 'prize_awarded'] = 2
-        important_aut.loc[important_aut['prize_awarded'] == 'µÚÈıÃû', 'prize_awarded'] = 3
-        important_aut.loc[important_aut['prize_awarded'] == 'µÚËÄÃû', 'prize_awarded'] = 4
-        important_aut.loc[important_aut['prize_awarded'] == 'µÚÎåÃû', 'prize_awarded'] = 5
+        important_aut.loc[important_aut['prize_awarded'] == 'ç¬¬ä¸€å', 'prize_awarded'] = 1
+        important_aut.loc[important_aut['prize_awarded'] == 'ç¬¬äºŒå', 'prize_awarded'] = 2
+        important_aut.loc[important_aut['prize_awarded'] == 'ç¬¬ä¸‰å', 'prize_awarded'] = 3
+        important_aut.loc[important_aut['prize_awarded'] == 'ç¬¬å››å', 'prize_awarded'] = 4
+        important_aut.loc[important_aut['prize_awarded'] == 'ç¬¬äº”å', 'prize_awarded'] = 5
         important_aut.loc[~important_aut['prize_awarded'].isin(range(1, 6)), 'prize_awarded'] = 6
         important_aut = important_aut.sort_values(by=['prize_awarded'])
         important_aut = important_aut.drop_duplicates(subset=['report_year', 'author_id', 'author'],
-                                                      keep='first')  # ±£ÁôÍ¬ÄêÍ¬Ò»·ÖÎöÊ¦µÄ×î¸ß½±Ïî
+                                                      keep='first')  # ä¿ç•™åŒå¹´åŒä¸€åˆ†æå¸ˆçš„æœ€é«˜å¥–é¡¹
         important_aut = important_aut.rename(columns={'report_year': 'award_year'})
         rpt_forecast['year_before_create'] = rpt_forecast['date'].dt.year.astype(int) - 1
         rpt_forecast = pd.merge(rpt_forecast, important_aut, left_on=['year_before_create', 'author_id', 'author'],
@@ -632,27 +626,27 @@ class FactorCalculator:
         columns_ = self.symbol_idx
         sub_data = rpt_forecast[(rpt_forecast['date'] >= index_1[0]) & (rpt_forecast['date'] <= self.date_idx[-1])]
         tmp = sub_data[sub_data['fore_type'] == fy].dropna(subset=field)
-        if mode == 0:  # µÈÈ¨
+        if mode == 0:  # ç­‰æƒ
             aa = pd.pivot_table(tmp, index='date', columns='stock_code', values=field, aggfunc='mean')
             aa = aa.reindex(index=index_1, columns=columns_)
             valid_data = self.get_valid_data(tmp, aa, index_1, columns_)
             factor = np.nanmean(valid_data, axis=0)
             factor = pd.DataFrame(factor, index=index_1, columns=columns_).reindex(index=self.date_idx)
-        elif mode == 1:  # Ê±¼ä¼ÓÈ¨
+        elif mode == 1:  # æ—¶é—´åŠ æƒ
             aa = pd.pivot_table(tmp, index='date', columns='stock_code', values=field, aggfunc='mean')
             aa = aa.reindex(index=index_1, columns=columns_)
             valid_data = self.get_valid_data(tmp, aa, index_1, columns_)
             time_weight = self.time_weight(valid_data)
             factor = np.nansum(valid_data * time_weight, axis=0)
             factor = pd.DataFrame(factor, index=index_1, columns=columns_).reindex(index=self.date_idx)
-        elif mode == 2:  # ·ÖÎöÊ¦¼ÓÈ¨
+        elif mode == 2:  # åˆ†æå¸ˆåŠ æƒ
             tmp2 = tmp[tmp['prize_awarded'].isin(range(1, 6))]
             tmp2['weight'] = 6 - tmp2['prize_awarded']
             aa = self.author_weight(tmp2, field, index_1, columns_)
             valid_data = self.get_valid_data(tmp2, aa, index_1, columns_)
             factor = np.nanmean(valid_data, axis=0)
             factor = pd.DataFrame(factor, index=index_1, columns=columns_).reindex(index=self.date_idx)
-        elif mode == 3:  # Ê±¼ä+·ÖÎöÊ¦¼ÓÈ¨
+        elif mode == 3:  # æ—¶é—´+åˆ†æå¸ˆåŠ æƒ
             tmp2 = tmp[tmp['prize_awarded'].isin(range(1, 6))]
             tmp2['weight'] = 6 - tmp2['prize_awarded']
             aa = self.author_weight(tmp2, field, index_1, columns_)
@@ -770,7 +764,7 @@ class FactorCalculator:
         newfortune_aut = pd.read_pickle('der_new_fortune_author.pkl')
         rpt_forecast = pd.read_pickle('rpt_forecast_stk.pkl')
         rpt_report_author = pd.read_pickle('rpt_report_author.pkl')
-        actual_rpt_date = pd.read_pickle("/nas197/user_home/xilin/µ×²ãÊı¾İ/long/¶¨ÆÚ±¨¸æÅûÂ¶ÈÕÆÚ.pkl")
+        actual_rpt_date = pd.read_pickle("/nas197/user_home/xilin/åº•å±‚æ•°æ®/long/å®šæœŸæŠ¥å‘ŠæŠ«éœ²æ—¥æœŸ.pkl")
         rpt_forecast['create_date'] = pd.to_datetime(rpt_forecast['create_date'].astype(str))
         rpt_forecast['updatetime'] = pd.to_datetime(rpt_forecast['updatetime'].dt.strftime('%Y-%m-%d'))
         rpt_forecast['date'] = np.where(rpt_forecast['create_date'] >= '2017-04-12', rpt_forecast['updatetime'],
@@ -814,7 +808,7 @@ class FactorCalculator:
         network[:, m, n] = 0
 
         adj_price = pd.read_pickle('adj_factor.pkl') * pd.read_pickle('close.pkl')
-        ret = adj_price.shift(1) / adj_price.shift(31) - 1  # t-1 / t-31 ¹ıÈ¥30ÈÕÊÕÒæÂÊ£¬·ÀÖ¹tÈÕ»ñÈ¡²»µ½Êı¾İÔì³ÉÎ´À´ĞÅÏ¢
+        ret = adj_price.shift(1) / adj_price.shift(31) - 1  # t-1 / t-31 è¿‡å»30æ—¥æ”¶ç›Šç‡ï¼Œé˜²æ­¢tæ—¥è·å–ä¸åˆ°æ•°æ®é€ æˆæœªæ¥ä¿¡æ¯
         ret = ret.reindex(index=self.date_idx, columns=self.symbol_idx).fillna(0)
         network_batch = np.log(network + 1)
         ret_arr = np.array(ret)[:, :, np.newaxis]
@@ -826,11 +820,11 @@ class FactorCalculator:
         factor2.to_pickle(os.path.join(self.target_dir, 'analyst_connected_firm_reverse.pkl'))
 
     def calc_funds_network_factor(self):
-        data = pd.read_pickle('»ú¹¹³Ö¹ÉÑÜÉúÊı¾İ.pkl')
+        data = pd.read_pickle('æœºæ„æŒè‚¡è¡ç”Ÿæ•°æ®.pkl')
         data = data.drop_duplicates(
             ['OBJECT_ID', 'S_INFO_WINDCODE', 'REPORT_PERIOD', 'S_HOLDER_QUANTITY', 'S_HOLDER_PCT', 'S_FLOAT_A_SHR',
              'ANN_DATE'], keep='first')
-        data = data[data.S_HOLDER_HOLDERCATEGORY == '»ù½ğ']
+        data = data[data.S_HOLDER_HOLDERCATEGORY == 'åŸºé‡‘']
         close = pd.read_pickle('close.pkl')
         amt20 = pd.read_pickle('turnover.pkl').rolling(window=20).mean()
         adj_close = close * pd.read_pickle('adj_factor.pkl')
@@ -855,7 +849,7 @@ class FactorCalculator:
         exp = alpha[:, np.newaxis, :] * network
         exp_avg = np.nanmean(exp, axis=2)
         factor_noneut = pd.DataFrame(exp_avg, index=self.date_idx, columns=self.symbol_idx)
-        # ºá½ØÃæµÄalphaºÍĞĞÒµÖĞĞÔ»¯(ÊĞÖµÌæ»»Îªalpha)
+        # æ¨ªæˆªé¢çš„alphaå’Œè¡Œä¸šä¸­æ€§åŒ–(å¸‚å€¼æ›¿æ¢ä¸ºalpha)
         df_isin_industry = pd.read_pickle('industry_df.pkl')
         factor_neut = self.neut_factor(factor_noneut, alpha_df, df_isin_industry)
         factor_neut.to_pickle(os.path.join(self.target_dir, 'funds_network_factor.pkl'))
@@ -869,10 +863,10 @@ class FactorCalculator:
         return aa
 
     def get_HNpct_factor(self):
-        data = pd.read_pickle('¹É¶«»§Êı.pkl')
+        data = pd.read_pickle('è‚¡ä¸œæˆ·æ•°.pkl')
 
         months_end = pd.date_range(start=pd.to_datetime(str(self.date_idx[0] - 20000), format='%Y%m%d'),
-                                   end=pd.to_datetime(str(self.date_idx[-1]), format='%Y%m%d'), freq='M')  # ¿ªÊ¼ÈÕÆÚ2ÄêÇ°ÖÁ½áÊøÈÕÆÚµÄÃ¿¸öÔÂ×îºóÒ»Ìì
+                                   end=pd.to_datetime(str(self.date_idx[-1]), format='%Y%m%d'), freq='M')  # å¼€å§‹æ—¥æœŸ2å¹´å‰è‡³ç»“æŸæ—¥æœŸçš„æ¯ä¸ªæœˆæœ€åä¸€å¤©
         dates_df = pd.DataFrame({'S_HOLDER_ENDDATE': months_end})
         dates_df['S_HOLDER_ENDDATE'] = dates_df['S_HOLDER_ENDDATE'].dt.strftime('%Y%m%d').astype(int)
         dates_df['last_td_day'] = dates_df['S_HOLDER_ENDDATE'].apply(
@@ -895,9 +889,9 @@ class FactorCalculator:
         mask = opdate_pivot <= opdate_pivot.index[:, None]
 
         def get_hnpct_nth(pivot_data, n, startdate, enddate):
-            # ´Ó1µ½n¹É¼ÛÕñ·ùÖğ½¥Ôö´ó
+            # ä»1åˆ°nè‚¡ä»·æŒ¯å¹…é€æ¸å¢å¤§
             partial_func = partial(self.get_hnpct_nth_one_symbol, pctchg=pctchg, pivot_data=pivot_data,
-                                   n=n)  # ²¢ĞĞ¼ÆËãÃ¿¸ösymbol
+                                   n=n)  # å¹¶è¡Œè®¡ç®—æ¯ä¸ªsymbol
             with mp.Pool(processes=mp.cpu_count()) as pool:
                 results = pool.map(partial_func, list(pctchg.columns))
             HNpct_nth = pd.concat(results, axis=1)
@@ -1134,7 +1128,7 @@ class FactorCalculator:
         factor_barra = self.event_overflow_3d(factor.astype(float), temp, self.date_idx)
         factor_barra.to_pickle(os.path.join(self.target_dir, 'InsiderTrade_MaxRatio.pkl'))
 
-    # barraÒò×Ó
+    # barraå› å­
 
     def calc_size(self):
         barra_df = pd.read_pickle('barra_factor.pkl')
@@ -1197,13 +1191,13 @@ class FactorCalculator:
         data.to_pickle(os.path.join(self.target_dir, 'non_linear_size.pkl'))
 
 if __name__ == '__main__':
-    factor_list = pd.read_excel('Òò×Ó³Ø.xlsx')['Êı¾İ×Ö¶Î'].to_list()
+    factor_list = pd.read_excel('å› å­æ± .xlsx')['æ•°æ®å­—æ®µ'].to_list()
     fc = FactorCalculator('D:/20241/bigdata/factor_data')
     for factor in factor_list:
         method_name = f'calc_{factor}'
         if hasattr(fc, method_name):
             method = getattr(fc, method_name)
-            method()  # µ÷ÓÃ·½·¨²¢´«Èë²ÎÊı
+            method()  # è°ƒç”¨æ–¹æ³•å¹¶ä¼ å…¥å‚æ•°
             print(f"Finish factor {factor}")
         else:
             print(f"Method {method_name} not found")
