@@ -9,8 +9,8 @@ from ysquant.api.stock.daily_sharry_reader import DailySharryReader
 import backtrader as bt
 
 import warnings
-# warnings.simplefilter(action='ignore', category=FutureWarning)
-# warnings.filterwarnings('ignore', category=SyntaxWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.filterwarnings('ignore', category=SyntaxWarning)
 warnings.filterwarnings('ignore')
 
 

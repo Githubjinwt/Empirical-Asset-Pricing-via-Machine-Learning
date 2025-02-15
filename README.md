@@ -1,6 +1,10 @@
 # Empirical-Asset-Pricing-via-Machine-Learning
 Empirical Asset Pricing via Machine Learning On Chinese A Share
 
+## Notices
+
+This quantitative project aims to build quantitative models and conduct strategy backtesting by analyzing stock data and factor data. During the project delivery process, we found that some code interfaces rely on local environments, and certain implementation details cannot be exported or disclosed, making it impossible to directly reproduce the results by executing the code. Nevertheless, we have provided the `sample_data.pkl` file for reference, allowing the professor to verify the data format and validate the authenticity and effectiveness of the project. Due to the large volume of data involved in the project, it is not feasible to package all factor data directly. Therefore, `sample_data.pkl` also serves to demonstrate the characteristics of the data. Through this file, the professor can understand the distribution, features, and processing methods of the data, thereby gaining a better grasp of the project's overall logic. We understand that this may cause some inconvenience, but we believe that by comparing data formats, examining data characteristics, and reviewing the logical flow, the professor can still comprehensively evaluate the quality and outcomes of the project. If there are any questions or need for further clarification, please feel free to contact us.
+
 ## Prerequisites
 
 Create results folder:
