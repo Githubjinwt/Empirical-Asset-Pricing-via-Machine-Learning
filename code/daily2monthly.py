@@ -1,3 +1,4 @@
+# 将日频数据转化为月频数据
 import pandas as pd
 import numpy as np
 from tqdm import tqdm

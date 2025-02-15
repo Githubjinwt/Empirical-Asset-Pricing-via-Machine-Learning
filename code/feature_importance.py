@@ -2,8 +2,6 @@
 import pandas as pd
 import numpy as np
 import os
-import time
-import gc
 from sklearn.metrics import r2_score
 from tqdm import tqdm
 
@@ -28,7 +26,7 @@ if __name__ == "__main__":
     dsr = DailySharryReader()
     
     # 读数据
-    factor_value_dir = '/nas197/user_home/guozhaopeng/aa_data/'
+    factor_value_dir = '../data/'
     index_ = dsr.date_idx[(dsr.date_idx >= 20150101) & (dsr.date_idx <= 20241231)]
     columns_ = dsr.symbol_idx
     data_arr = np.zeros((len(os.listdir(factor_value_dir)), len(index_), len(columns_)))
@@ -64,13 +62,10 @@ if __name__ == "__main__":
     del daily_data
     
     factors = ['All'] + monthly_data.columns.drop(['stock_code', 'date', 'target']).tolist()
-    # models = ['OLS', 'PLS', 'ENET', 'LGBM'] # cpu
-    models = ['XGB', 'NN'] # gpu
-    # res_r2 = pd.DataFrame(index=factors, columns=models)
-    # res_ic = pd.DataFrame(index=factors, columns=models)
-    res_r2 = pd.read_csv('/nas197/user_home/guozhaopeng/aa_results/results/GPU_factor_importance_r2.csv', index_col=0)
-    res_ic = pd.read_csv('/nas197/user_home/guozhaopeng/aa_results/results/GPU_factor_importance_ic.csv', index_col=0)
-    factors = res_ic[res_ic['NN'].isnull()].index.tolist() + ['All']
+    models = ['OLS', 'PLS', 'ENET', 'LGBM'] # cpu
+    # models = ['XGB', 'NN'] # gpu
+    res_r2 = pd.DataFrame(index=factors, columns=models)
+    res_ic = pd.DataFrame(index=factors, columns=models)
     # 遍历每一个因子
     for factor in tqdm(factors, desc='遍历所有因子'):
         print('backtest factor: ', factor)
@@ -92,5 +87,5 @@ if __name__ == "__main__":
             res_r2.loc[factor, model] = r2
             res_ic.loc[factor, model] = ic
             
-            res_r2.to_csv('/nas197/user_home/guozhaopeng/aa_results/results/GPU_factor_importance_r2.csv', index=True)
-            res_ic.to_csv('/nas197/user_home/guozhaopeng/aa_results/results/GPU_factor_importance_ic.csv', index=True)
+            res_r2.to_csv('../results/feature_importance_r2.csv', index=True)
+            res_ic.to_csv('../results/feature_importance_ic.csv', index=True)

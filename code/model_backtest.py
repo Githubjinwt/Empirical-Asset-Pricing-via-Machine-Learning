@@ -37,8 +37,8 @@ from tqdm import tqdm
 # import backtrader as bt
 
 import warnings
-# warnings.simplefilter(action='ignore', category=FutureWarning)
-# warnings.filterwarnings('ignore', category=SyntaxWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.filterwarnings('ignore', category=SyntaxWarning)
 warnings.filterwarnings('ignore')
 
 
@@ -936,6 +936,7 @@ def norm_and_fillna(data):
     data = (data - mu) / sigma
     data = np.nan_to_num(data, 0)
     return data
+
 # 主函数
 def backtest_main(data, train_period=36, valid_period=6, test_period=6, roll_freq=6, freq='m', model='OLS', n_layer=2):
     """
@@ -949,7 +950,7 @@ def backtest_main(data, train_period=36, valid_period=6, test_period=6, roll_fre
     roll_freq (int): 滚动频率（月数/日数）
     freq(str): 数据频率('m'月频,'d'日频)
     """
-    # print('Backtest Model: ', model)
+    print('Backtest Model: ', model)
     # 加载数据
     # data = pd.read_csv(data_path, parse_dates=['date'], index_col='date')
 
@@ -1033,63 +1034,6 @@ def backtest_main(data, train_period=36, valid_period=6, test_period=6, roll_fre
     # 合并所有预测结果
     results_df = pd.concat(results)
 
-    # # 根据预测收益率分组
-    # results_df['group'] = results_df.groupby('date')['predicted_return'].transform(
-    #     lambda x: pd.qcut(x, 5, labels=False, duplicates='drop')
-    # )
-
-    # # 筛选指定组别的数据
-    # group_num = 0
-    # group_data = results_df[results_df['group'] == group_num].set_index(['date', 'stock_code']).index
-    # group_data = group_data.to_frame(index=False).set_index('date')
-
-    # # 回测
-    # cerebro = bt.Cerebro()
-
-    # # backtrader不接受pd.Period，所以转化为datetime
-    # # open high low close都是必须的参数，虽然用不上，但是要有
-    # data['date'] = data['date'].dt.to_timestamp()
-    # data['high'] = data['close']
-    # data['low'] = data['close']
-    # data['open'] = data['close']
-    # data['volume'] = 1000000
-    # data['openinterest'] = 0
-
-    # # 添加股票数据
-    # for stock_code in results_df['stock_code'].unique():
-    #     stock_data = bt.feeds.PandasData(
-    #         dataname=data.loc[data['stock_code'] == stock_code].set_index('date'),
-    #         name=stock_code
-    #     )
-    #     cerebro.adddata(stock_data)
-
-    # # 添加策略
-    # cerebro.addstrategy(GroupStrategy, group_data=group_data)
-    # cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='my_sharpe')
-    # cerebro.addanalyzer(bt.analyzers.Returns, _name='my_returns')
-    # cerebro.addanalyzer(bt.analyzers.DrawDown, _name='my_drawdown')
-    # cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='my_trade_analyzer')
-    # cerebro.addanalyzer(bt.analyzers.PyFolio)
-
-    # # 设置初始资金
-    # cerebro.broker.set_cash(1000000)
-
-    # # 运行回测
-    # print("Starting Portfolio Value: %.2f" % cerebro.broker.getvalue())
-    # results = cerebro.run()
-
-    # # 统计结果
-    # sharpe_ratio = results[0].analyzers.my_sharpe.get_analysis()['sharperatio']
-    # annual_return = results[0].analyzers.my_returns.get_analysis()['rnorm']
-    # max_drawdown = results[0].analyzers.my_drawdown.get_analysis()["max"]["drawdown"]/100
-    # trade_num = results[0].analyzers.my_trade_analyzer.get_analysis()['total']['total']
-
-    # print(f"夏普率: {sharpe_ratio}, 年化收益率: {annual_return}, 最大回撤: {max_drawdown}, 交易次数: {trade_num}")
-    # print("Final Portfolio Value: %.2f" % cerebro.broker.getvalue())
-
-    # 绘制回测结果，但是画的好像有问题
-    # cerebro.plot(iplot=True)
-
     return results_df
 
 def my_cs_rank(arr_2d):
@@ -1103,7 +1047,7 @@ if __name__ == "__main__":
     dsr = DailySharryReader()
 
     # 读数据
-    factor_value_dir = '/nas197/user_home/guozhaopeng/aa_data/'
+    factor_value_dir = '../data/'
     index_ = dsr.date_idx[(dsr.date_idx >= 20150101) & (dsr.date_idx <= 20241231)]
     columns_ = dsr.symbol_idx
     data_arr = np.zeros((len(os.listdir(factor_value_dir)), len(index_), len(columns_)))
@@ -1142,14 +1086,9 @@ if __name__ == "__main__":
     # coverage = 1 - daily_data.isna().sum(axis=0) / len(daily_data)
     # coverage.to_excel('/nas197/user_home/guozhaopeng/aa_results/factor_coverage.xlsx', index=True)
 
-    # for m in ['NN2']:
-    # for n_layer in [2]:
-    # for m in ['PLS', 'ENET', 'RF', 'LGBM', 'GBRT', 'GLM']:
-    for m in ['Transformer']:
+    for m in ['OLS', 'PCR', 'PLS', 'ENET', 'RF', 'GLM', 'GBRT', 'LGBM', 'XGB', 'Transformer', 'NN']:
         results = backtest_main(monthly_data.copy(), 12*3, 6, 6, 6, 'm', m) # 月频
-        results.to_pickle(f'/nas197/user_home/guozhaopeng/aa_results/monthly_preds_{m}.pkl')
+        results.to_pickle(f'../results/monthly_preds_{m}.pkl')
         
-        # results = backtest_main(daily_data.copy(), 30*12*3, 30*6, 30*6, 30*6, 'd', 'NN', n_layer) # 日频
-        # results.to_pickle(f'/nas197/user_home/guozhaopeng/aa_results/preds_NN2_2.pkl')
-    # results = backtest_main(daily_data.copy(), 30*12*3, 30*6, 30*6, 30*6, 'd', 'Transformer')
-    # results.to_pickle(f'/nas197/user_home/guozhaopeng/aa_results/preds_Transformer.pkl')
+        results = backtest_main(daily_data.copy(), 30*12*3, 30*6, 30*6, 30*6, 'd', 'NN', n_layer) # 日频
+        results.to_pickle(f'../results/preds_{m}.pkl')

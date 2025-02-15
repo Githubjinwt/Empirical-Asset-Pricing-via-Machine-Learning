@@ -5,7 +5,7 @@ import pandas as pd
 
 class TradingDay(object):
     def __init__(self):
-        self.trading_days = np.load('trading_days.npy')
+        self.trading_days = np.load('../data/trading_days.npy')
         self.date_map = dict(list(zip(self.trading_days, np.arange(self.length))))
 
     @property
