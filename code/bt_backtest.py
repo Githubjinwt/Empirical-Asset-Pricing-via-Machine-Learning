@@ -133,7 +133,7 @@ def annualized_return(nav):
     return pow(nav[-1] / nav[0], 252 / length) - 1
 
 # 回测所有结果
-folder = '../results/'
+folder = 'results/'
 files = os.listdir(folder)
 files = [i for i in files if i.endswith('pkl')]
 res = pd.DataFrame(columns=['model', '年化收益率', '夏普比率', '最大回撤', '交易次数', '总收益率'])
@@ -149,7 +149,6 @@ for filename in tqdm(files):
     results_df['date'] = pd.to_datetime(results_df['date'], format='%Y-%m-%d')
     results_df.sort_values(by=['date', 'stock_code'], ignore_index=True, inplace=True)
 
-    # data = pd.merge(results_df, adj_close, on=['date', 'stock_code'], how='left')
     data = pd.merge_asof(results_df, adj_close, on=['date'], by=['stock_code'], allow_exact_matches=True, direction='forward')
 
     # backtrader不接受pd.Period，所以转化为datetime
@@ -166,7 +165,7 @@ for filename in tqdm(files):
         lambda x: pd.qcut(x, 10, labels=False, duplicates='drop')
     )
     
-    # 筛选指定组别的数据
+    # 筛选指定组别的数据，做多前10%的股票
     group_num = 9
     group_data = results_df[results_df['group'] == group_num].set_index(['date', 'stock_code']).index
     group_data = group_data.to_frame(index=False).set_index('date')
@@ -212,7 +211,7 @@ for filename in tqdm(files):
     # 保存结果
     returns.index = returns.index.strftime(date_format='%Y-%m-%d')
     transactions.index = transactions.index.strftime(date_format='%Y-%m-%d')
-    with pd.ExcelWriter(os.path.join('/nas197/user_home/guozhaopeng/aa_results/results/bt_results', model+'.xlsx'), engine='openpyxl') as writer:
+    with pd.ExcelWriter(os.path.join('results', model+'.xlsx'), engine='openpyxl') as writer:
         returns.to_excel(writer, sheet_name='Returns', index=True)
         transactions.to_excel(writer, sheet_name='Transactions', index=True)
     
@@ -222,4 +221,4 @@ for filename in tqdm(files):
     # 绘制回测结果，但是画的好像有问题
     # cerebro.plot(iplot=True)
 
-res.to_csv('../results/btResults.csv', index=False)
+res.to_csv('results/btResults.csv', index=False)

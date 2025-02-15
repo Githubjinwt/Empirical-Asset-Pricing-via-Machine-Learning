@@ -1047,7 +1047,7 @@ if __name__ == "__main__":
     dsr = DailySharryReader()
 
     # 读数据
-    factor_value_dir = '../data/'
+    factor_value_dir = 'data/'
     index_ = dsr.date_idx[(dsr.date_idx >= 20150101) & (dsr.date_idx <= 20241231)]
     columns_ = dsr.symbol_idx
     data_arr = np.zeros((len(os.listdir(factor_value_dir)), len(index_), len(columns_)))
@@ -1081,14 +1081,14 @@ if __name__ == "__main__":
     daily_data = daily_data.reset_index(drop=True)
     
     monthly_data = transform_to_monthly(daily_data)
-    del daily_data
+    # del daily_data
 
     # coverage = 1 - daily_data.isna().sum(axis=0) / len(daily_data)
     # coverage.to_excel('/nas197/user_home/guozhaopeng/aa_results/factor_coverage.xlsx', index=True)
 
     for m in ['OLS', 'PCR', 'PLS', 'ENET', 'RF', 'GLM', 'GBRT', 'LGBM', 'XGB', 'Transformer', 'NN']:
         results = backtest_main(monthly_data.copy(), 12*3, 6, 6, 6, 'm', m) # 月频
-        results.to_pickle(f'../results/monthly_preds_{m}.pkl')
+        results.to_pickle(f'results/monthly_preds_{m}.pkl')
         
         results = backtest_main(daily_data.copy(), 30*12*3, 30*6, 30*6, 30*6, 'd', 'NN', n_layer) # 日频
-        results.to_pickle(f'../results/preds_{m}.pkl')
+        results.to_pickle(f'results/preds_{m}.pkl')

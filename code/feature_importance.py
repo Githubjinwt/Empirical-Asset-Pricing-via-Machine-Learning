@@ -26,7 +26,7 @@ if __name__ == "__main__":
     dsr = DailySharryReader()
     
     # 读数据
-    factor_value_dir = '../data/'
+    factor_value_dir = 'data/'
     index_ = dsr.date_idx[(dsr.date_idx >= 20150101) & (dsr.date_idx <= 20241231)]
     columns_ = dsr.symbol_idx
     data_arr = np.zeros((len(os.listdir(factor_value_dir)), len(index_), len(columns_)))
@@ -87,5 +87,5 @@ if __name__ == "__main__":
             res_r2.loc[factor, model] = r2
             res_ic.loc[factor, model] = ic
             
-            res_r2.to_csv('../results/feature_importance_r2.csv', index=True)
-            res_ic.to_csv('../results/feature_importance_ic.csv', index=True)
+            res_r2.to_csv('results/feature_importance_r2.csv', index=True)
+            res_ic.to_csv('results/feature_importance_ic.csv', index=True)
